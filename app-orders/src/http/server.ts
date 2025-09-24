@@ -1,7 +1,10 @@
+import '@opentelemetry/auto-instrumentations-node/register'
 import { fastify } from 'fastify'
 import { randomUUID } from 'node:crypto'
+import { trace } from '@opentelemetry/api'
+import { setTimeout } from 'node:timers/promises'
 import { fastifyCors } from '@fastify/cors'
-import { custom, z } from 'zod'
+import { custom, set, z } from 'zod'
 import {
             serializerCompiler,
             validatorCompiler,
@@ -10,6 +13,7 @@ import {
 import { db } from '../db/client.ts'
 import { schema } from '../db/schema/index.ts'
 import { dispatchOrderCreated } from '../broker/messages/order-created.ts'
+import { tracer } from '../tracer/tracer.ts'
 
 
 
@@ -53,6 +57,9 @@ app.post('/orders', {
             })
 
 
+            trace.getActiveSpan()?.setAttribute('order.id', orderId)
+
+
 
             await db.insert(schema.orders).values({
                         id: orderId,
@@ -60,6 +67,20 @@ app.post('/orders', {
                         amount,
 
             })
+
+
+
+            const span = tracer.startSpan('Simulating a long task')
+
+            span.setAttribute('just', 'testing')
+
+            await setTimeout(2000)
+
+            span.end()
+
+
+
+
 
 
             return reply.status(201).send()
