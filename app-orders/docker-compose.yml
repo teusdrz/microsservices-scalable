@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  pg:
+    image: bitnami/postgresql:latest
+    ports:
+      - '5842:5432'
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=orders
+    volumes:
+      - ./docker:/docker-entrypoint-initdb.d
+  service-orders:
+    build: .
+    ports:
+      - "3333:3333"
